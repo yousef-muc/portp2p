@@ -222,7 +222,7 @@ to use its local URL or the connector address.
 ## How It Works
 
 <!-- Replace this placeholder without changing the path when the final architecture image is ready. -->
-![portp2p connection architecture](./artifacts/general/img/architecture.png)
+![portp2p connection architecture](./artifacts/general/img/how.png)
 
 1. `share` creates a random code, hashes it, starts a libp2p peer, and registers
    the peer's reachable addresses with rendezvous.
