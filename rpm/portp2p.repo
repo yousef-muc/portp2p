@@ -1,0 +1,7 @@
+[portp2p]
+name=portp2p packages
+baseurl=https://yousef-muc.github.io/portp2p/rpm/$basearch
+enabled=1
+repo_gpgcheck=1
+gpgcheck=1
+gpgkey=https://yousef-muc.github.io/portp2p/rpm/RPM-GPG-KEY-portp2p

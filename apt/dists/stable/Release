@@ -1,0 +1,32 @@
+Architectures: amd64 arm64
+Codename: stable
+Components: main
+Date: Thu, 01 Oct 2026 12:06:44 +0000
+Description: portp2p Linux packages
+Label: portp2p
+Origin: portp2p
+Suite: stable
+MD5Sum:
+ 6579f0390fb78d9c85f78be1e7af7ab0              180 Release
+ af9a8bec3737ae405606e7b299aa19be              484 main/binary-amd64/Packages
+ 19c46f7e5240ec6c0aee8bc8043a9c82              364 main/binary-amd64/Packages.gz
+ 2857a23c512832d3fc57151b20d56059              483 main/binary-arm64/Packages
+ e54600e34a750eaa73bde32c48a43a13              362 main/binary-arm64/Packages.gz
+SHA1:
+ 6208e4e657c88083f133dd1d0633c54771ede950              180 Release
+ ec8274ba29672d99a2d59eb9454502218abceaf5              484 main/binary-amd64/Packages
+ 18a8d56e5d6923c663b01db394db5e718664b507              364 main/binary-amd64/Packages.gz
+ f160e583a64ec3196eb9a5dfdfdc0a359d7c5215              483 main/binary-arm64/Packages
+ 1f56b420d121ac313443c47f80d1bc0524f7cab6              362 main/binary-arm64/Packages.gz
+SHA256:
+ f328515161830ddaa6c6280139808df88b9c971925af4905f56e2dbe3c919897              180 Release
+ 3c88ce237b5d8a3c1bca857991d4714d625ba1d715bb2fad6cad31311b756064              484 main/binary-amd64/Packages
+ 2e243a93c71866eeef5226523462bf78083417ab80e8f901ccdba094db154c57              364 main/binary-amd64/Packages.gz
+ 9cb5138d10f921b0fc31393827be001e9fb542b8a29f43a32b8ce4cd62942d56              483 main/binary-arm64/Packages
+ 61865e35c7b808050a7014139743277a1afb9e487b11df6eed137727f5146a08              362 main/binary-arm64/Packages.gz
+SHA512:
+ 54f03e0a6b74ad51b287eb1d22231e820f933de1196d7e7d4d7e543e0c591c85bd008e000ba02323d8ba0e90d796c92fc7a4ddfa9789c3afc824d3ad45371640              180 Release
+ ec62aba5aa70627fc0674ab045bc276000b1e3fde6c4162174578af7fa8fc270b88a969e27b01a78f978239331c7f2c8ac6b9ffef8c0b4de9689c58effd9e42a              484 main/binary-amd64/Packages
+ dc7db159b0792cc6178d3e63edd69ca50f9e51649699097d8543e6383085f2ad9ed912c211ce3120c03cceb8a7514d35fd5001a58f565c4ae15fe4442f9624e5              364 main/binary-amd64/Packages.gz
+ 89bef7b62799696d8cefcc27391c24bead637c0b0f32021ca78cd5a54edbaf21d69b0a5bac2a25014b563095d6333740154b7e8697854304a52e4dcc13fb8cd6              483 main/binary-arm64/Packages
+ faaa16a641fef0a3355aba4e977891554583f2dc6554d0e4ded92d36a3cdc17a18b5d39698e106807c80d88ec27be4673dfd09c92183144422acfa963d4d02ea              362 main/binary-arm64/Packages.gz
