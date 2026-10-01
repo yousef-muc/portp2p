@@ -609,7 +609,7 @@ For AI-assisted installation and operations, see [AGENTS.md](AGENTS.md).
 ## Better Together With napctl
 
 <!-- Replace this placeholder without changing the path when the final integration image is ready. -->
-![portp2p and napctl integration](./artifacts/general/img/napctl-integration.png)
+![portp2p and napctl integration](./artifacts/general/img/napd.png)
 
 [napctl](https://github.com/yousef-muc/napctl) is a local and edge container
 compute orchestrator. It can wake existing Docker workloads on demand, wait for
