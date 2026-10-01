@@ -606,6 +606,35 @@ a proxy was involved. Never include a live share code or credentials.
 
 For AI-assisted installation and operations, see [AGENTS.md](AGENTS.md).
 
+## Better Together With napctl
+
+<!-- Replace this placeholder without changing the path when the final integration image is ready. -->
+![portp2p and napctl integration](./artifacts/general/img/napctl-integration.png)
+
+[napctl](https://github.com/yousef-muc/napctl) is a local and edge container
+compute orchestrator. It can wake existing Docker workloads on demand, wait for
+health checks, route requests, observe CPU, RAM, GPU, and VRAM resources, and
+stop inactive workloads when resources are needed elsewhere.
+
+`portp2p` complements that lifecycle layer with secure temporary connectivity:
+
+- `napctl` makes sure the application is running and healthy on the sharer's
+  machine.
+- `portp2p` shares the selected local TCP endpoint through a direct encrypted
+  connection or Circuit Relay fallback.
+- The remote user receives the service as localhost without exposing the whole
+  host or its container network.
+
+Together they are particularly useful for GPU-backed tools such as ComfyUI,
+local AI interfaces, development environments, and private dashboards: napctl
+manages when and where the workload runs, while portp2p controls who can reach
+that specific service for the lifetime of a share.
+
+When combining them, choose a local endpoint that matches the napctl gateway,
+routing, and idle policy for that workload. See the
+[napctl documentation](https://github.com/yousef-muc/napctl) for installation
+and service configuration.
+
 ## License
 
 `portp2p` is distributed under the [MIT License](LICENSE).
