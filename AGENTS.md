@@ -223,8 +223,11 @@ portp2p version --plain
 portp2p status --plain
 ```
 
-`version` prints the build's default server URL. If it is empty, obtain the
-operator-approved URL and configure it without inventing a public endpoint:
+Official builds default to `https://portp2p.com`. `version` prints the build
+default and `status` prints the effective configuration. The server supplies
+its current native and WSS relay addresses dynamically through `/v1/info`.
+
+Use an operator-approved self-hosted service when the user requests one:
 
 ```sh
 export PORTP2P_SERVER=https://relay.example.com
@@ -252,12 +255,14 @@ server URLs and versions.
 Use the embedded interface when the user prefers browser controls:
 
 ```sh
-portp2p web --server https://relay.example.com
+portp2p web
 ```
 
-Open the printed loopback URL. The interface can share, connect, search public
-discovery, open private invitations, request or decide access, publish or
-unpublish a share, and stop sessions created by that Web UI process. Its Server
+Open the printed loopback URL. It uses `https://portp2p.com` unless the user
+overrides the server through configuration or the local Server dialog. The
+interface can share, connect, search public discovery, open private
+invitations, request or decide access, publish or unpublish a share, and stop
+sessions created by that Web UI process. Its Server
 dialog can change the rendezvous URL only after all active sessions are stopped.
 Optional relay fields override automatic relay discovery for one operation.
 

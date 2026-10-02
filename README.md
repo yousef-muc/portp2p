@@ -39,6 +39,7 @@ package repositories, release binaries, checksums, and user documentation.
 | Rendezvous visibility | Hashed code, peer addresses, capabilities, and expiry; no tunneled payload |
 | Browser applications | HTTP, WebSockets, SSE, uploads, and downloads pass transparently |
 | Restricted networks | HTTPS rendezvous plus WSS relay through HTTP CONNECT or SOCKS5 proxies |
+| Default service | `https://portp2p.com`, with dynamic relay discovery and self-hosted overrides |
 | Platforms | macOS, Linux, and Windows on amd64 and arm64 |
 
 ## Installation
@@ -141,16 +142,23 @@ Compare the printed value with the matching entry in `checksums.txt`.
 
 ## Quick Start
 
-Both computers must use the same rendezvous service. A release may contain a
-preconfigured service URL; `portp2p version --plain` shows it. If no default is
-listed, set the URL supplied by your administrator or run your own server:
+Official releases use `https://portp2p.com` by default, so both computers can
+start immediately without configuring a server. `portp2p version --plain`
+shows the build default, while `portp2p status --plain` shows the effective
+configuration. The client fetches current native and WSS relay addresses from
+the service automatically, allowing relay infrastructure to change without a
+new client release.
+
+To use a self-hosted or administrator-provided service instead:
 
 ```sh
 export PORTP2P_SERVER=https://relay.example.com
 ```
 
-Use `--server https://relay.example.com` on each command instead when you do
-not want to set an environment variable.
+Use `--server https://relay.example.com` on one command instead when you do not
+want to set an environment variable. Selecting the official default does not
+publish anything: normal shares remain private and require their random code;
+discovery requires an explicit publish action.
 
 ### 1. Start The Local Application
 
