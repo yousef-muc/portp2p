@@ -43,6 +43,9 @@ The main components are:
 
 - `share`: owns the local target and serves authenticated tunnel streams;
 - `connect`: creates the connector's local listener;
+- `discover`: searches explicitly public, temporary service listings;
+- `access`: opens private invitations and manages requester-side approval;
+- `web`: runs the loopback-only local browser interface;
 - rendezvous: stores temporary peer metadata under a hash of the share code;
 - Circuit Relay: forwards encrypted libp2p traffic when direct dialing fails.
 
@@ -52,6 +55,12 @@ remains encrypted between the two portp2p peers.
 ## Non-Negotiable Safety Rules
 
 - Treat every live share code as a temporary password.
+- Never publish a share unless the user explicitly requests discovery.
+- Confirm visibility (`public` search or `private` invitation) and access
+  (`direct` or `approval`) when publishing on the user's behalf.
+- Make clear that public direct Discovery v1 allows anyone finding the listing
+  to connect without an approval step.
+- Treat private invitation codes and access request tokens as secrets.
 - Never write share codes, proxy credentials, private keys, access tokens, or
   other secrets into Git, logs, screenshots, issue reports, or public docs.
 - Do not repeat a user-provided share code in the final response. Redact it.
@@ -64,6 +73,8 @@ remains encrypted between the two portp2p peers.
 - Do not trust `X-Forwarded-For` from the internet. Add `--trusted-proxy` only
   for reverse-proxy addresses or CIDRs the operator controls.
 - Do not expose a plain WebSocket relay listener directly to the internet.
+- Never bind, reverse proxy, or otherwise expose `portp2p web` outside the
+  local machine. It is a client UI, not an infrastructure admin console.
 - Do not use plain HTTP for a public rendezvous endpoint.
 - Do not overwrite or delete an existing identity key. Back it up before an
   intentional identity rotation.
@@ -81,6 +92,9 @@ Determine the role before running commands:
 
 - Sharer: owns the local application and runs `portp2p share <port>`.
 - Connector: receives a code and runs `portp2p connect <code>`.
+- Discovery user: searches public listings with `portp2p discover`.
+- Access requester: opens an invitation or requests an owner-approved grant
+  with `portp2p access`.
 - Infrastructure host: runs combined `portp2p server`, or separate rendezvous
   and relay processes.
 - Multi-role host: performs more than one role intentionally, such as local
@@ -233,6 +247,26 @@ Configuration precedence is:
 Before diagnosing different behavior on two computers, compare their effective
 server URLs and versions.
 
+## Operate The Local Web UI
+
+Use the embedded interface when the user prefers browser controls:
+
+```sh
+portp2p web --server https://relay.example.com
+```
+
+Open the printed loopback URL. The interface can share, connect, search public
+discovery, open private invitations, request or decide access, publish or
+unpublish a share, and stop sessions created by that Web UI process. Its Server
+dialog can change the rendezvous URL only after all active sessions are stopped.
+Optional relay fields override automatic relay discovery for one operation.
+
+A normal Web UI share remains private unless the user explicitly enables
+discovery. Published visibility and access are independent. Never expose the
+local HTTP port, place it behind a reverse proxy, or describe it as a remote
+administration dashboard. Closing the tab does not end active sessions; stop
+them in the Sessions view or stop the Web UI process with Ctrl+C.
+
 ## Operate A Share Safely
 
 ### 1. Verify The Target
@@ -302,6 +336,59 @@ usable through the tunnel.
 Use `Ctrl+C` for the connector and sharer when the session is finished. Stopping
 the sharer closes its rendezvous registration. Do not leave a long expiry
 running after the user no longer needs access.
+
+## Operate Discovery And Access Safely
+
+A normal share is private. Use public discovery only after the user explicitly
+chooses unrestricted temporary public access:
+
+```sh
+portp2p share 3000 --plain \
+  --publish --name "Demo service" --category demo --tag http
+```
+
+The output contains a private code and a separate public connect code. Never
+expose the private code. Search and connect with:
+
+```sh
+portp2p discover demo --plain
+portp2p connect <public-connect-code> --plain
+```
+
+Confirm the listing disappears after the sharer stops. Discovery v1 has no
+accounts, payments, or approval. Keep application authentication enabled for
+sensitive public direct services.
+
+For signed Discovery v2 and Access v3, first preserve the user's configured
+identity. Approval and private listings require a stable service key:
+
+```sh
+portp2p share 3000 --plain \
+  --publish --name "Demo by request" \
+  --service-key demo-home --access approval
+```
+
+A public requester uses the stable Service ID:
+
+```sh
+portp2p access request <service-id> --message "Reason for access" --plain
+```
+
+The running sharer accepts `approve <request-id>` or `deny <request-id>`.
+Approved codes are temporary and bound to the requester's libp2p identity.
+Never approve a request merely because it contains a persuasive message; show
+the requester Peer ID and leave the trust decision to the human owner.
+
+For invitation-only discovery, add `--visibility private`. Private listings
+must never appear in `portp2p discover` output or public result counts. Give the
+separate invitation only to intended recipients. They use
+`portp2p access open <invitation-code>` for direct access or
+`portp2p access request <invitation-code>` for approval access.
+
+Do not confuse the normal private share code, public discovery code, private
+invitation, request token, or approved grant. They are separate capabilities
+with different exposure and revocation boundaries. There are no user accounts,
+roles, payments, marketplace rankings, or persistent request database.
 
 ## ComfyUI And WebSocket Applications
 
@@ -425,6 +512,12 @@ A stable identity makes peer behavior predictable across runs.
 `portp2p status --plain` shows the identity path and effective configuration
 without exposing private-key material.
 
+Use `portp2p identity init` to initialize the configured identity explicitly,
+`portp2p identity backup <destination>` to create a private backup, and
+`portp2p identity restore <backup>` on a new installation. Backup and restore
+never print key material and never overwrite an existing destination. The
+backup itself is not encrypted and must be stored securely.
+
 ## Operate Infrastructure
 
 Use combined server mode unless the deployment specifically needs rendezvous
@@ -510,12 +603,9 @@ portp2p server --plain \
   --max-sessions 10000 \
   --max-sessions-per-remote 16 \
   --max-addrs-per-share 32 \
-  --relay-limit-duration 24h \
-  --relay-limit-bytes 10737418240 \
-  --relay-reservation-ttl 1h \
-  --relay-max-reservations 128 \
-  --relay-max-circuits 64 \
-  --relay-buffer-size 16384 \
+  --max-discovery-listings 1000 \
+  --max-discovery-listings-per-remote 4 \
+  --relay-profile public-small \
   --identity /var/lib/portp2p/identity.key
 ```
 
@@ -552,6 +642,7 @@ curl https://relay.example.com/v1/info
 Confirm:
 
 - health and readiness return success;
+- `/v1/info` includes `share-management-v1`;
 - `/v1/info` publishes the intended relay multiaddrs;
 - every advertised address contains the running relay Peer ID;
 - the WSS address uses the public DNS name and TLS port;

@@ -1,6 +1,5 @@
 # portp2p - One-Port Localhost Sharing
 
-<!-- Replace this placeholder without changing the path when the final hero is ready. -->
 ![portp2p hero](./artifacts/general/img/hero.png)
 
 [![Release](https://img.shields.io/github/v/release/yousef-muc/portp2p?label=release)](https://github.com/yousef-muc/portp2p/releases)
@@ -32,7 +31,9 @@ package repositories, release binaries, checksums, and user documentation.
 | --- | --- |
 | Shared resource | One service at `127.0.0.1:<port>` |
 | Connector listener | `127.0.0.1:<port>` by default |
-| Access credential | Random, temporary share code |
+| Access credential | Random temporary share code or approved grant |
+| Discovery | Optional public search or private invitation |
+| Discovery access | Direct or owner-approved |
 | Data path | Direct libp2p connection when possible; Circuit Relay fallback |
 | Encryption | Authenticated libp2p transport encryption end to end |
 | Rendezvous visibility | Hashed code, peer addresses, capabilities, and expiry; no tunneled payload |
@@ -197,6 +198,99 @@ curl http://127.0.0.1:9000/
 Press `Ctrl+C` on either computer to stop its process. Stopping `share` closes
 the rendezvous registration immediately.
 
+### Local Web Interface
+
+To use the same workflows in a browser, run:
+
+```sh
+portp2p web
+```
+
+Open the printed local URL, normally `http://127.0.0.1:4173`. The embedded
+interface can create private or explicitly public shares, connect codes, search
+discovery, and stop sessions started by that Web UI process. Use its Server
+dialog to select another rendezvous service when no session is active. Share
+and Connect forms also accept an explicit relay multiaddr.
+
+The interface starts in dark mode. Its top-bar theme button switches to light
+mode and remembers that preference in the local browser.
+
+The Web UI accepts only loopback addresses and is not a hosted dashboard. Do
+not reverse proxy it or expose its port to a LAN or the internet. Closing the
+browser tab does not stop sessions; Ctrl+C on the `portp2p web` process closes
+them cleanly.
+
+## Optional Discovery And Controlled Access
+
+The normal Quick Start above is private: its code is never searchable. Publish
+a direct public service only when every user of the same discovery server may
+find and use it:
+
+```sh
+portp2p share 3000 --plain \
+  --publish \
+  --name "Demo service" \
+  --description "Temporary public HTTP demo" \
+  --category demo \
+  --tag http
+```
+
+The sharer prints both a `Private code` and a separate `Public connect code`.
+Only the public code and the supplied metadata appear in discovery. Search and
+filter live listings with:
+
+```sh
+portp2p discover --plain
+portp2p discover demo --category demo --tag http --plain
+portp2p discover --limit 10 --json
+```
+
+Connect to a result with the existing command:
+
+```sh
+portp2p connect <public-connect-code> --plain
+```
+
+Discovery v1 listings are temporary and public. Anyone who finds one can
+connect without an approval step. Stopping or expiring the share removes the
+listing; a running share restores it after a temporary rendezvous restart while
+keeping the same public code.
+
+Visibility and access can also be selected independently:
+
+| Visibility | Access | Behavior |
+| --- | --- | --- |
+| Public | Direct | Searchable and immediately connectable |
+| Public | Approval | Searchable; owner approves each requester |
+| Private | Direct | Invitation-only and immediately connectable |
+| Private | Approval | Invitation-only and owner-approved |
+
+Approval and private modes require a stable service key. For a searchable
+service that requires approval:
+
+```sh
+portp2p share 3000 --plain \
+  --publish --name "Demo by request" \
+  --service-key demo-home --access approval
+
+portp2p access request <service-id> --message "Demo user" --plain
+```
+
+The running sharer accepts `approve <request-id>` or `deny <request-id>`. The
+requester retrieves an approved, identity-bound temporary code with:
+
+```sh
+portp2p access status <request-id> --token <request-token> --plain
+```
+
+For an invitation-only listing, add `--visibility private`. Recipients use
+`portp2p access open <invitation-code>` for direct access or
+`portp2p access request <invitation-code>` when approval is required. Private
+listings never appear in public search or result counts.
+
+There are no accounts, roles, payments, marketplace rankings, or persistent
+database. Listings, requests, and grants are temporary in-memory state.
+
 ## ComfyUI And Browser Applications
 
 ComfyUI normally listens on port `8188`. Start ComfyUI locally, then share it:
@@ -221,7 +315,6 @@ to use its local URL or the connector address.
 
 ## How It Works
 
-<!-- Replace this placeholder without changing the path when the final architecture image is ready. -->
 ![portp2p connection architecture](./artifacts/general/img/how.png)
 
 1. `share` creates a random code, hashes it, starts a libp2p peer, and registers
@@ -236,6 +329,11 @@ to use its local URL or the connector address.
 5. Every tunnel stream must prove possession of the share code before `share`
    opens a connection to the local target.
 6. Bytes are copied end to end without interpreting the application protocol.
+
+With `--publish`, the sharer creates a separate discovery capability. Depending
+on the selected mode, that is a public connect code, a private invitation, or a
+signed approval flow. The normal private code still follows the flow above and
+never enters the listing.
 
 ### Connection Paths
 
@@ -333,6 +431,12 @@ portp2p --config /path/to/portp2p.json status --plain
 By default, the peer identity is stored in the operating system's user config
 directory. Keep this file private. Removing it creates a new peer identity on
 the next run.
+
+Use `portp2p identity init` to create it explicitly,
+`portp2p identity backup <destination>` to make a protected backup, and
+`portp2p identity restore <backup>` on a new installation. The commands never
+print private key material and refuse to overwrite an existing destination.
+The backup file is not encrypted and must be stored securely.
 
 ## Self-Hosting
 
@@ -435,6 +539,8 @@ Relevant production defaults include:
 | Active rendezvous sessions | 10,000 |
 | Active sessions per source | 16 |
 | Peer addresses per share | 32 |
+| Discovery listings, public and private | 1,000 |
+| Public listings per source | 4 |
 | Relay connection duration | 24 hours |
 | Relay data per direction | 10 GiB |
 | Concurrent relay circuits per peer | 64 |
@@ -451,7 +557,15 @@ Security properties:
 
 - `share` targets only `127.0.0.1:<port>`.
 - `connect` listens only on `127.0.0.1` unless `--bind` is explicitly changed.
-- Rendezvous stores a hash of the code, never the plain code.
+- Rendezvous stores a hash of a private share code, never its plain value.
+- Current client/server pairs use a separate hashed management token to protect
+  registration refresh, replacement, closing, and public listing from
+  share-code recipients.
+- Normal shares are private; only `share --publish` creates a discovery listing.
+- Public direct discovery uses a separate code and never exposes the private code.
+- Private discovery is absent from search and requires a separate invitation.
+- Approval listings expose no connect code until the owner approves a signed
+  requester; grants are temporary and requester-bound.
 - Tunnel streams authenticate possession of the code before the target opens.
 - Replay protection rejects reused tunnel authentication nonces.
 - Unauthenticated handshakes have strict concurrency and time limits.
@@ -463,6 +577,8 @@ Security properties:
 Operational rules:
 
 - Treat a share code like a temporary password.
+- Treat public direct publication as permission for unrestricted temporary access.
+- Treat private invitations and request tokens as temporary passwords.
 - Send it through a private channel.
 - Do not include live codes in logs, screenshots, issue reports, or shell
   transcripts.
@@ -481,7 +597,11 @@ handling still apply.
 | --- | --- |
 | `portp2p share <port>` | Create and serve a temporary one-port share |
 | `portp2p connect <code>` | Recreate a shared service on localhost |
+| `portp2p discover [query]` | Search live public discovery listings |
+| `portp2p access` | Open invitations and request or retrieve approved access |
+| `portp2p web` | Run the embedded local browser interface |
 | `portp2p status` | Show identity, configuration, and local reachability |
+| `portp2p identity` | Initialize, back up, or restore the local identity |
 | `portp2p server` | Run combined rendezvous and relay infrastructure |
 | `portp2p rendezvous` | Run only the control service |
 | `portp2p relay` | Run only the Circuit Relay service |
@@ -608,7 +728,6 @@ For AI-assisted installation and operations, see [AGENTS.md](AGENTS.md).
 
 ## Better Together With napctl
 
-<!-- Replace this placeholder without changing the path when the final integration image is ready. -->
 ![portp2p and napctl integration](./artifacts/general/img/napd.png)
 
 [napctl](https://github.com/yousef-muc/napctl) is a local and edge container
