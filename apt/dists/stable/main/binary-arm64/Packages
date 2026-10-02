@@ -1,13 +1,13 @@
 Package: portp2p
-Version: 1.1.0
+Version: 1.2.0
 Architecture: arm64
 Maintainer: portp2p maintainers
-Installed-Size: 24460
-Filename: pool/main/p/portp2p/portp2p_1.1.0_linux_arm64.deb
-Size: 9319550
-MD5sum: 3427e494e33649d04144a3c7706e1f14
-SHA1: 05af3fc64c0e64f8434ca33c43c9557b5ac1a1e6
-SHA256: 6418f59e2e01394c87285867cbd3394f69f3c49750e0c3dd3e54a716b90b0f74
+Installed-Size: 25168
+Filename: pool/main/p/portp2p/portp2p_1.2.0_linux_arm64.deb
+Size: 9578780
+MD5sum: 80cac74f762d1f9bce879c7a5565bc5e
+SHA1: d81235c887b584e5fe567693aed2dbe71f0586dc
+SHA256: 40ff0b2c7938d7566f52d9da8f73aeeedac60368729b7b6cff7dff95ff470078
 Section: utils
 Priority: optional
 Homepage: https://github.com/yousef-muc/portp2p
